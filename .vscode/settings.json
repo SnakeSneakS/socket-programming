@@ -1,0 +1,32 @@
+{
+    "files.associations": {
+        "*.html": "html",
+        "socket.h": "c",
+        "stdlib.h": "c",
+        "unistd.h": "c",
+        "stdio.h": "c",
+        "string.h": "c",
+        "locale": "c",
+        "random": "c",
+        "types.h": "c",
+        "inet.h": "c",
+        "__functional_base": "c",
+        "__functional_base_03": "c",
+        "__hash_table": "c",
+        "__tree": "c",
+        "__tuple": "c",
+        "algorithm": "c",
+        "array": "c",
+        "chrono": "c",
+        "compare": "c",
+        "cstddef": "c",
+        "type_traits": "c",
+        "functional": "c",
+        "iterator": "c",
+        "limits": "c",
+        "memory": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "utility": "c"
+    }
+}
