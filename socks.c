@@ -2,7 +2,7 @@
  refs: https://github.com/jakobbotsch/csocks5/blob/master/main.c
  */
 
-
+/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -570,3 +570,4 @@ end:
     close(server);
     return retVal;
 }
+*/

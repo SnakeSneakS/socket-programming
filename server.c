@@ -28,8 +28,6 @@ void ListenAndServeTCP(int port, socket_message_handler *handleMessage)
     serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddr.sin_port = htons(port);
 
-    //https://www.geekpage.jp/programming/linux-network/http-server.php 
-    //これは何だろう
     int yes = 1;
     setsockopt(servSock,SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
 
@@ -65,9 +63,8 @@ void ListenAndServeTCP(int port, socket_message_handler *handleMessage)
         printf("Handling client %s\n", inet_ntoa(clientAddr.sin_addr));
         
         //Handle(clientSocket, handleMessage);
-        //Handle(clientSocket, HTTPStatusOK);
+        //Handle(clientSocket, HTTPHelloWorld);
         HandleOnce(clientSocket,HandleWebRequest);
-
     }
     close(servSock);
 }

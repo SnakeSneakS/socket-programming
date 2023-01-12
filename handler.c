@@ -4,13 +4,15 @@
 #include<unistd.h>
 #include<stdbool.h>
 #include<go/out/go.h>
+#include<http.h>
+#include<proxy.h>
 
 //#include<arpa/inet.h>
 //#include<stdlib.h>
 #include<string.h>
 //#include<unistd.h>
 
-#define RCVBUFSIZE (1<<20)
+#include<config.h>
 
 typedef void socket_message_handler(int socket, void *echoBuffer, size_t recvMsgSize);
 
@@ -73,17 +75,20 @@ void EchoMessage(int socket, char *messageBuffer, size_t messageSize){
     }
 }
 
-void HTTPStatusOK(int socket, char *messageBuffer, size_t messageSize){
+void HTTPHelloWorld(int socket, char *messageBuffer, size_t messageSize){
+    /*XXXXXXXXXXXXXXXXstruct CustomHTTPRequest req = ParseHTTPRequest(messageBuffer);
+    printf("Host: %s\n",req.Host);
+    printf("PATH: %s\n",req.Path);
+    printf("METHOD: %s\n",req.Method);*/
+    
     printf("received: \n%s",messageBuffer);
-    char buf[2048];
+    char buf[60];
     memset(buf, 0, sizeof(buf));
     snprintf(buf, sizeof(buf),
         "HTTP/1.1 200 OK\r\n"
-        //"Content-Length: 20\r\n"
         "Content-Type: text/html\r\n"
-        //"Connection: close\r\n"
         "\r\n"
-        "HELLO\r\n");
+        "Hello World\r\n");
     if(send(socket, buf, (int)strlen(buf), 0) != (int)strlen(buf)){
         perror("send() failed");
         close(socket);
@@ -91,27 +96,100 @@ void HTTPStatusOK(int socket, char *messageBuffer, size_t messageSize){
     }
 }
 
+struct HTTPResponse createResponseForGetRequest(struct HTTPRequest req){
+    struct HTTPResponse res;
+    if(strcmp(req.path,"/proxy")==0){
+        printf("NotImplemented");
+    }
+    // 前方一致: /echo/
+    else if(strncmp(req.path,"/echo",5)==0){
+        res.HTTPStatus=200;
+        res.ContentType="text/html";
+        char content[1000];
+        if(strcmp(req.path,"/echo")==0){
+            char *example="HelloWorld\%20INPUT\%20TEXT\%20HERE!!";
+            sprintf(content,"for path /echo/$Value, return $Value<br/><br/>example: <a href=\"/echo/%s\">%s/echo/%s<a>", example,req.host,example);
+        }else{
+            sprintf(content,"%s",req.path);
+        }
+        
+        res.Content=(content);  
+        //例えば右のようにscriptを実行できる. http://localhost:8080/%3Cscript%3Ealert(%221%22);%3C/script%3E
+    }
+    // Not Found
+    else{
+        res.HTTPStatus=404;
+        res.ContentType="text/html";
+        char content[1000];
+        sprintf(content,"404 Not Found\n");
+        res.Content=(content);  
+    }
+    return res;
+}
+
+size_t createResponseForConnectRequest(
+    struct HTTPRequest req,
+    char *reqBuffer,
+    char *resBuffer){
+    size_t res = Relay(
+        req.host,
+        req.port,
+        req.path,
+        reqBuffer,
+        resBuffer
+    );
+    return res;
+}
 
 void HandleWebRequest(int socket, char *messageBuffer, size_t messageSize){
-    struct CustomHTTPRequest req = ParseHTTPRequest(messageBuffer);
-    printf("Host: %s\n",req.Host);
-    printf("PATH: %s\n",req.Path);
-    printf("METHOD: %s\n",req.Method);
+    struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
     
-    char buf[2048];
-    memset(buf, 0, sizeof(buf));
-    snprintf(buf, sizeof(buf),
-        "HTTP/1.1 200 OK\r\n"
-        //"Content-Length: 20\r\n"
-        "Content-Type: text/html\r\n"
-        //"Connection: close\r\n"
-        "\r\n"
-        "HELLO\r\n");
-    if(send(socket, buf, (int)strlen(buf), 0) != (int)strlen(buf)){
+    struct HTTPResponse res;
+
+    char responseMessage[RCVBUFSIZE];
+    memset(responseMessage, 0, sizeof(responseMessage));
+
+    //error check
+    if(req.host==NULL || req.path==NULL){
+        res.HTTPStatus=500;
+        res.ContentType="text/html";
+        res.Content="Internal server error";
+        HTTPResponseString(res, responseMessage, RCVBUFSIZE);
+        goto send;
+    }
+
+    /*
+    switch (req.method)
+    {
+    case (enum HTTPMethod)GET:
+        res = createResponseForGetRequest(req);
+        HTTPResponseString(res, responseMessage, RCVBUFSIZE);
+        break;
+    case (enum HTTPMethod)CONNECT:
+        createResponseForConnectRequest(req, messageBuffer, responseMessage);
+        break;
+    case (enum HTTPMethod)UNKNOWN_METHOD:
+        res.HTTPStatus=404;
+        res.ContentType="text/html";
+        res.Content="Unknown Method";
+        HTTPResponseString(res, responseMessage, RCVBUFSIZE);
+        break;
+    default:
+        res.HTTPStatus=500;
+        res.ContentType="text/html";
+        res.Content="Internal server error";
+        HTTPResponseString(res, responseMessage, RCVBUFSIZE);
+        break;
+    }
+    */
+    createResponseForConnectRequest(req, messageBuffer, responseMessage);
+
+    send: if(send(socket, responseMessage, (int)strlen(responseMessage), 0) != (int)strlen(responseMessage)){
         perror("send() failed");
         close(socket);
         return;
     }
+    
 }
 
 

@@ -5,7 +5,7 @@
 #include<string.h>
 #include<unistd.h>
 
-#define RCVBUFSIZE (1<<10)  
+#include<config.h>
 
 int main(int argc, char *argv[])
 {

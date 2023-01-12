@@ -14,8 +14,9 @@ build-server: ## build server ## make build-server
 run-server: ## run server ## make run-server
 	mkdir -p ./out
 	gcc \
-	-framework CoreFoundation \
-	-o ./out/server handler.c go/out/go.a server.c
+	-framework CoreFoundation -framework Security \
+	-o ./out/server \
+	go/out/go.a http.c proxy.c handler.c server.c 
 	./out/server ${PORT}
 
 .PHONY: run-client

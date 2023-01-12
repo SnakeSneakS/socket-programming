@@ -27,6 +27,9 @@
         "memory": "c",
         "ratio": "c",
         "tuple": "c",
-        "utility": "c"
+        "utility": "c",
+        "__locale": "c",
+        "executor": "c",
+        "netdb.h": "c"
     }
 }
