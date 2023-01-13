@@ -139,6 +139,10 @@ void handleIndexGet(int socket, struct HTTPRequest req){
 }
 
 void handleProxyConnect(int clientSocket, struct HTTPRequest req){
+    //connectメソッドの仕様がよくわからない.
+    fprintf(stderr, "handleProxyConnect NotImplemented");
+    return;
+
     fprintf(stdout, "establish connection toward %s:%d%s\n",req.host,req.port,req.path);
     
     //resolve host name
@@ -336,8 +340,7 @@ void HandleWebProxyRequest(int socket){
     }
 
     if(req.method==CONNECT){
-        fprintf(stderr, "NotImplementedYet");
-        //handleProxyConnect(socket, req);
+        handleProxyConnect(socket, req);
     }
     else if(req.method!=UNKNOWN_METHOD){
         //curl google.com --proxy http://user:password@localhost:8080

@@ -6,6 +6,7 @@
 #include<unistd.h>
 #include<stdbool.h>
 #include<pthread.h>
+#include<signal.h>
 
 #include<handler.h>
 
@@ -16,19 +17,24 @@ enum Mode{
 
 #define MAXPENDING 5
 
-
-
+//threading
 struct ThreadArgs{
+    pthread_mutex_t *mutex;
     int clientSocket;
     enum Mode serverMode;
+    unsigned long *counter;
 };
-
-
 void *ThreadMain(void *threadArgs){
     pthread_detach(pthread_self()); 
+    pthread_mutex_t *mutex = ((struct ThreadArgs *) threadArgs)->mutex;
     int clientSocket = ((struct ThreadArgs *) threadArgs)->clientSocket;
     enum Mode serverMode = ((struct ThreadArgs *) threadArgs)->serverMode;
+    unsigned long *counter = ((struct ThreadArgs *) threadArgs)->counter;
     free(threadArgs);
+
+    pthread_mutex_lock(mutex);
+    *counter += 1;
+    pthread_mutex_unlock(mutex);
 
     switch (serverMode)
     {
@@ -43,20 +49,55 @@ void *ThreadMain(void *threadArgs){
         break;
     }
 
+    pthread_mutex_lock(mutex);
+    *counter -= 1;
+    pthread_mutex_unlock(mutex);
+
     return NULL;
 }
 
+//for gracefully shutting down server
+bool _stop = false;
+void setStopServerFlag(int ignored){
+    printf("setStopServerFlag on\n");
+    _stop = true;
+}
 
-
+//TODO: graceful shutting down
 void ListenAndServeTCP(int port, enum Mode serverMode)
 {
+    //for graceful shut down
+    //Ctrl+C to shutting down  
+    struct sigaction stopActionHandler; 
+    stopActionHandler.sa_handler=setStopServerFlag;
+    if (sigfillset(&stopActionHandler.sa_mask) < 0){
+        perror("sigfillset() failed");
+        return;
+    }
+    stopActionHandler.sa_mask=0; //block all signals while 
+    if (sigaction(SIGINT, &stopActionHandler, NULL)==-1){
+        perror("sigaction() failed");
+        return;
+    }
+    
+    stopActionHandler.sa_flags = 0;
+    
+
+
+    unsigned long workerCounter = 0; //active workers counter
+    pthread_mutex_t mutex;
+    if(pthread_mutex_init(&mutex, NULL)!=0){
+        perror("pthread_mutex_init() failed");
+        return;
+    }
+
     int serverSock;
     struct sockaddr_in serverAddr;
-    struct sockaddr_in clientAddr;
+    struct sockaddr_in clientAddr;    
   
     if ((serverSock = socket(PF_INET, SOCK_STREAM, 0)) < 0){
         perror("socket() failed");
-        return;
+        goto FREE_SERVER;
     }
      
     // local address structure 
@@ -71,48 +112,68 @@ void ListenAndServeTCP(int port, enum Mode serverMode)
     // Bind to the local address
     if (bind(serverSock, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0){
         perror("bind() failed");
-        return;
+        goto FREE_SERVER;
     }
 
     // Mark the socket `listen`
     if (listen(serverSock, MAXPENDING) < 0){
         perror("listen() failed");
-        return;
+        goto FREE_SERVER;
     }
 
     printf("listening on port %d\n", port);
     
-    while(true) 
+    while(!_stop) 
     {
-        /* Set the size of the in-out parameter */ 
-        unsigned int clientLen = sizeof(clientAddr);
-
         //wait client connect
-        int clientSocket = clientSocket = accept(serverSock, (struct sockaddr *) &clientAddr, &clientLen);
+        unsigned int clientLen = sizeof(clientAddr);
+        int clientSocket = accept(serverSock, (struct sockaddr *) &clientAddr, &clientLen);
         if (clientSocket < 0){
             perror("accept() failed");
-            close(clientSocket);
-            return;
+            goto FREE_CLIENT;
         }
 
         struct ThreadArgs *threadArgs = (struct ThreadArgs *) malloc(sizeof(struct ThreadArgs));
         if(threadArgs==NULL){
             perror("malloc() failed");
-            exit(1);
+            goto FREE_CLIENT;
         }
+        threadArgs->mutex=&mutex;
         threadArgs->clientSocket=clientSocket;
         threadArgs->serverMode=serverMode;
+        threadArgs->counter=&workerCounter;
 
         pthread_t threadID;
         if (pthread_create(&threadID, NULL, ThreadMain, (void *) threadArgs) != 0){
             perror("pthread_create() failed");
-            exit(1);
+            goto FREE_CLIENT;
         }
         
+        printf("worker: %lu\n", workerCounter);
         printf("Handling client %s, thread: %ld\n", inet_ntoa(clientAddr.sin_addr), (long int) threadID);
-        
+
+        continue;
+
+    FREE_CLIENT:
+        printf("free client %s\n", inet_ntoa(clientAddr.sin_addr));
+        close(clientSocket);
+        continue; //break;
     }
-    close(serverSock);
+
+FREE_SERVER:
+    printf("----------\n");
+    printf("Stopping server...\n");
+    printf("Input Ctrl+C to force stop\n");
+    printf("----------\n");
+    printf("waiting workers... %lu\n", workerCounter);
+    while(workerCounter>0){
+        printf("waiting workers... %lu\n", workerCounter);
+        sleep(1000);
+    }
+    if(pthread_mutex_destroy(&mutex)!=0) perror("pthread_mutex_destroy() failed");
+    if(close(serverSock)!=0) perror("close(serverSock) failed");
+    printf("server stoped!\n");
+    return;
 }
 
 int main(int argc, char *argv[]){

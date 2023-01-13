@@ -36,7 +36,7 @@ run-client: ## run client ## make run-client IP=127.0.0.1 PORT=8080 TEXT="test m
 .PHONY: clean
 clean: ## clean built file ## make clean
 	cd go && make clean && cd ../
-	rm out/server && rm out/client
+	rm -f out/server && rm -f out/client
 
 .PHONY: help
 help: ## show help ## make help ## 

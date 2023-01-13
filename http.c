@@ -75,6 +75,8 @@ struct HTTPRequest ParseHTTPRequest(char *message) {
     if(r.Host==NULL || r.Path==NULL | r.Method==NULL){
         fprintf(stderr,"failed to parse http request. %s",message);
         struct HTTPRequest req;
+        req.host=NULL;
+        req.path=NULL;
         return req;
     }
     /*

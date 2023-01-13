@@ -2,3 +2,7 @@
 
 # help
 run `make` or `make help`
+
+# requirments
+- Clang environment
+- Golang environment

@@ -5,8 +5,8 @@
 
 .PHONY: clean
 clean: ## clean ## make clean
-	rm out/go.a 
-	rm out/go.h
+	rm -f out/go.a 
+	rm -f out/go.h
 
 .PHONY: build
 build: ## build ## make build
