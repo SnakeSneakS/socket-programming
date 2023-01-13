@@ -2,9 +2,9 @@
 
 .DEFAULT_GOAL := help
 
-IP="127.0.0.1"
+HOST="127.0.0.1"
 PORT=8080
-TEXT="This is an test message kdlxCNKLXZCNXZLCJNJZXKCJ85NX7ZIC5J5K6K3DN3S45X3Z2CB15I5678U9D96SLKJCNWEDSIVKJLCJDSWREJ2PVIBOWJDNBSFCVUQEHIPFHY21f0jce"
+TEXT="This is an test message"
 
 
 .PHONY: build-server-module
@@ -17,7 +17,7 @@ build-server: ## build server ## make build-server
 	gcc \
 	-framework CoreFoundation -framework Security \
 	-o ./out/server \
-	go/out/go.a http.c proxy.c handler.c server.c 
+	go/out/go.a http.c socket.c handler.c server.c 
 
 .PHONY: run-web-server
 run-web-server: build-server ## run web server ## make run-web-server PORT={port}
@@ -27,11 +27,18 @@ run-web-server: build-server ## run web server ## make run-web-server PORT={port
 run-proxy-server: build-server ## run proxy server ## make run-proxy-server PORT={port}
 	./out/server ${PORT} 1
 
-.PHONY: run-client
-run-client: ## run client ## make run-client IP=127.0.0.1 PORT=8080 TEXT="test message"
+
+.PHONY: build-client
+build-client: ## build client ## make build-client
 	mkdir -p ./out
-	gcc -o ./out/client client.c
-	./out/client ${IP} ${PORT} ${TEXT}
+	gcc \
+	-framework CoreFoundation -framework Security \
+	-o ./out/client \
+	go/out/go.a http.c socket.c client.c
+	
+.PHONY: run-client
+run-client: build-client ## run client ## make run-client HOST=127.0.0.1 PORT=8080 TEXT="test message"
+	./out/client ${HOST} ${PORT} ${TEXT}
 
 .PHONY: clean
 clean: ## clean built file ## make clean

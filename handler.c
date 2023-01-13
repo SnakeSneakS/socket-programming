@@ -3,15 +3,12 @@
 #include<sys/socket.h>
 #include<unistd.h>
 #include<stdbool.h>
+#include<netdb.h>
+#include<string.h>
+
 #include<go/out/go.h>
 #include<http.h>
-#include<proxy.h>
-#include<netdb.h>
-
-//#include<arpa/inet.h>
-//#include<stdlib.h>
-#include<string.h>
-//#include<unistd.h>
+#include<socket.h>
 
 #include<config.h>
 
@@ -61,10 +58,9 @@ size_t createResponseForConnectRequest(
     struct HTTPRequest req,
     char *reqBuffer,
     char *resBuffer){
-    size_t res = Relay(
+    size_t res = SendOnce(
         req.host,
         req.port,
-        req.path,
         reqBuffer,
         resBuffer
     );
@@ -305,7 +301,7 @@ void handleHTTPProxy(int socket, char *messageBuffer,struct HTTPRequest req){
     }
 
     char responseBuffer[RCVBUFSIZE];
-    int size = Relay(req.host, req.port, req.path, messageBuffer, responseBuffer);
+    int size = SendOnce(req.host, req.port, messageBuffer, responseBuffer);
     if(send(socket, responseBuffer, (int)strlen(responseBuffer), 0) != (int)strlen(responseBuffer)){
         perror("send() failed");
         return;
