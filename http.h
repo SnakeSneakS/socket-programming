@@ -1,3 +1,5 @@
+#include<stdbool.h>
+
 typedef enum HTTPMethod{
     //OPTIONS,
     GET,
@@ -17,6 +19,7 @@ struct HTTPRequest{
     char *path;
     //HTTPRequestHeader *headers;
     HTTPMethod method;
+    bool isError;
 };
 
 struct HTTPRequest ParseHTTPRequest(char *message);

@@ -30,6 +30,7 @@
         "utility": "c",
         "__locale": "c",
         "executor": "c",
-        "netdb.h": "c"
+        "netdb.h": "c",
+        "go.h": "c"
     }
 }

@@ -74,14 +74,13 @@ void ListenAndServeTCP(int port, enum Mode serverMode)
         perror("sigfillset() failed");
         return;
     }
+    sigemptyset(&stopActionHandler.sa_mask);
     stopActionHandler.sa_mask=0; //block all signals while 
+    stopActionHandler.sa_flags = SA_RESETHAND;
     if (sigaction(SIGINT, &stopActionHandler, NULL)==-1){
         perror("sigaction() failed");
         return;
     }
-    
-    stopActionHandler.sa_flags = 0;
-    
 
 
     unsigned long workerCounter = 0; //active workers counter
@@ -167,8 +166,8 @@ FREE_SERVER:
     printf("----------\n");
     printf("waiting workers... %lu\n", workerCounter);
     while(workerCounter>0){
+        sleep(1);
         printf("waiting workers... %lu\n", workerCounter);
-        sleep(1000);
     }
     if(pthread_mutex_destroy(&mutex)!=0) perror("pthread_mutex_destroy() failed");
     if(close(serverSock)!=0) perror("close(serverSock) failed");

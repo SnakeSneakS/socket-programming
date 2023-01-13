@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdbool.h>
 #include<go/out/go.h>
-
 
 /*
 //全部ではない
@@ -39,11 +39,12 @@ HTTPMethod parseHTTPMethod(char *method){
     if(strcasecmp(method,"Get")==0) return GET;
     //if(strcmp(method,"Options")==0) return OPTIONS;
     //if(strcmp(method,"Head")==0) return HEAD;
-    //if(strcmp(method,"Post")==0) return POST;
-    //if(strcmp(method,"Put")==0) return PUT;
-    //if(strcmp(method,"Delete")==0) return DELETE;
+    if(strcmp(method,"Post")==0) return POST;
+    if(strcmp(method,"Put")==0) return PUT;
+    if(strcmp(method,"Delete")==0) return DELETE;
     //if(strcmp(method,"Trace")==0) return TRACE;
-    //if(strcmp(method,"Connect")==0) return CONNECT;
+    if(strcmp(method,"Patch")==0) return PATCH;
+    if(strcmp(method,"Connect")==0) return CONNECT;
     return UNKNOWN_METHOD;
 };
 
@@ -53,6 +54,7 @@ struct HTTPRequest{
     char *path;
     //HTTPRequestHeader *headers;
     HTTPMethod method;
+    bool isError;
 };
 
 /*
@@ -75,8 +77,7 @@ struct HTTPRequest ParseHTTPRequest(char *message) {
     if(r.Host==NULL || r.Path==NULL | r.Method==NULL){
         fprintf(stderr,"failed to parse http request. %s",message);
         struct HTTPRequest req;
-        req.host=NULL;
-        req.path=NULL;
+        req.isError=true;
         return req;
     }
     /*
@@ -90,6 +91,7 @@ struct HTTPRequest ParseHTTPRequest(char *message) {
     req.host=r.Host;
     req.port=r.Port;
     req.path=r.Path;
+    req.isError=false;
     req.method=parseHTTPMethod(r.Method);
     return req;
 }

@@ -242,7 +242,7 @@ void handleProxyConnect(int clientSocket, struct HTTPRequest req){
 
 void handleHttpRequest(int socket,struct HTTPRequest req){
     //error check
-    if(req.host==NULL || req.path==NULL){
+    if(req.isError){
         char responseMessage[RCVBUFSIZE];
         memset(&responseMessage, 0, sizeof(responseMessage));
         struct HTTPResponse res;
@@ -256,6 +256,8 @@ void handleHttpRequest(int socket,struct HTTPRequest req){
             close(socket);
             return;
         }
+
+        goto END;
     }
 
     if(strcmp(req.path,"/")==0){
@@ -271,6 +273,8 @@ void handleHttpRequest(int socket,struct HTTPRequest req){
     }else{
         fprintf(stdout, "unhandling request");
     }
+
+    END: return;
 }
 
 void HandleWebRequest(int socket){
@@ -286,7 +290,6 @@ void HandleWebRequest(int socket){
 
     struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
     handleHttpRequest(socket, req);
-    
     
     close(socket);
     printf("closed\n");
@@ -323,7 +326,7 @@ void HandleWebProxyRequest(int socket){
     struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
     
     //error check
-    if(req.host==NULL || req.path==NULL){
+    if(req.isError){
         char responseMessage[RCVBUFSIZE];
         memset(&responseMessage, 0, sizeof(responseMessage));
         struct HTTPResponse res;
@@ -337,6 +340,7 @@ void HandleWebProxyRequest(int socket){
             close(socket);
             return;
         }
+        goto END;
     }
 
     if(req.method==CONNECT){
@@ -349,6 +353,6 @@ void HandleWebProxyRequest(int socket){
         respondNotFound(socket, req);  
     }
     
-    close(socket);
+    END: close(socket);
     printf("closed\n");
 }

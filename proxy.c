@@ -82,6 +82,21 @@ int Relay(char *host, int port, char *path, char *relayBuffer, char *resultBuffe
         return sizeof(resultBuffer);
     }
 
+    /*
+    while(bytesRcvd>0){
+        if((bytesRcvd = recv(relaySock, resultBuffer, RCVBUFSIZE - 1, 0)) <= 0){
+            perror("recv() failed or connection closed prematurely");
+            struct HTTPResponse res;
+            res.HTTPStatus = 500;
+            res.ContentType="text/html";
+            res.Content="recv failed.";
+            HTTPResponseString(res, resultBuffer, RCVBUFSIZE);
+            return sizeof(resultBuffer);
+        }
+        printf("test message size: %d\n", bytesRcvd);
+    }
+    */
+
     close(relaySock);
     return bytesRcvd;
 }

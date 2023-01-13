@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     int totalBytesRcvd = 0;
     int bytesRcvd;
 
-    while (totalBytesRcvd < textLen)
+    while (bytesRcvd>0)
     {
         /* Receive up to the buffer size (minus 1 to leave space for
            a null terminator) bytes from the sender */
