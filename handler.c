@@ -94,7 +94,7 @@ void handleEchoGet(int socket, struct HTTPRequest req){
     }
 }
 
-void handleNotFound(int socket, struct HTTPRequest req){
+void respondNotFound(int socket, struct HTTPRequest req){
     struct HTTPResponse res;
     res.HTTPStatus=404;
     res.ContentType="text/html";
@@ -236,32 +236,7 @@ void handleProxyConnect(int clientSocket, struct HTTPRequest req){
     end: close(relaySocket);
 }
 
-void handleHTTPProxy(int socket, char *messageBuffer,struct HTTPRequest req){
-    fprintf(stdout, "relay connection toward %s:%d%s\n",req.host,req.port,req.path);
-    
-    char responseBuffer[RCVBUFSIZE];
-    int size = Relay(req.host, req.port, req.path, messageBuffer, responseBuffer);
-    if(send(socket, responseBuffer, (int)strlen(responseBuffer), 0) != (int)strlen(responseBuffer)){
-        perror("send() failed");
-        return;
-    }
-}
-
-
-
-void HandleWebRequest(int socket){
-    char messageBuffer[RCVBUFSIZE];
-    size_t messageSize;   //receive message size
-
-    // Receive message from client 
-    if ((messageSize = recv(socket, messageBuffer, RCVBUFSIZE, 0)) < 0){
-        perror("recv() failed");
-        close(socket);
-        return;
-    }
-
-    struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
-    
+void handleHttpRequest(int socket,struct HTTPRequest req){
     //error check
     if(req.host==NULL || req.path==NULL){
         char responseMessage[RCVBUFSIZE];
@@ -288,15 +263,47 @@ void HandleWebRequest(int socket){
     }
     // Not Found
     else if(req.method==GET){
-        handleNotFound(socket, req);  
+        respondNotFound(socket, req);  
     }else{
         fprintf(stdout, "unhandling request");
     }
+}
+
+void HandleWebRequest(int socket){
+    char messageBuffer[RCVBUFSIZE];
+    size_t messageSize;   //receive message size
+
+    // Receive message from client 
+    if ((messageSize = recv(socket, messageBuffer, RCVBUFSIZE, 0)) < 0){
+        perror("recv() failed");
+        close(socket);
+        return;
+    }
+
+    struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
+    handleHttpRequest(socket, req);
+    
     
     close(socket);
     printf("closed\n");
 }
 
+
+void handleHTTPProxy(int socket, char *messageBuffer,struct HTTPRequest req){
+    fprintf(stdout, "relay connection toward %s:%d%s\n",req.host,req.port,req.path);
+    
+    if(strcmp(req.host,"")==0 || strcmp(req.host,"localhost")==0 || strcmp(req.host,"127.0.0.1")==0){
+        handleHttpRequest(socket, req);
+        return;
+    }
+
+    char responseBuffer[RCVBUFSIZE];
+    int size = Relay(req.host, req.port, req.path, messageBuffer, responseBuffer);
+    if(send(socket, responseBuffer, (int)strlen(responseBuffer), 0) != (int)strlen(responseBuffer)){
+        perror("send() failed");
+        return;
+    }
+}
 
 void HandleWebProxyRequest(int socket){
     char messageBuffer[RCVBUFSIZE];
@@ -336,9 +343,8 @@ void HandleWebProxyRequest(int socket){
         //curl google.com --proxy http://user:password@localhost:8080
         handleHTTPProxy(socket, messageBuffer, req);
     }else{
-        handleNotFound(socket, req);  
+        respondNotFound(socket, req);  
     }
-
     
     close(socket);
     printf("closed\n");
