@@ -2,12 +2,12 @@ typedef enum HTTPMethod{
     //OPTIONS,
     GET,
     //HEAD,
-    //POST,
-    //PUT,
-    //DELETE,
+    POST,
+    PUT,
+    DELETE,
     //TRACE,
     CONNECT, //for proxy server
-    //PATCH,
+    PATCH,
     UNKNOWN_METHOD
 } HTTPMethod;
 

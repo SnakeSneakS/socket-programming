@@ -22,7 +22,6 @@ struct CustomHTTPRequest {
 import "C"
 import (
 	"bufio"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -46,19 +45,16 @@ func CGOParseHTTPRequest(message *C.char) C.struct_CustomHTTPRequest {
 			Error: 1,
 		}
 	}
-	host, port, _ := net.SplitHostPort(req.Host)
-	if err != nil {
-		host = ""
-		port = "80"
-	}
-	port_int, err := strconv.Atoi(port)
+
+	port_int, err := strconv.Atoi(req.URL.Port())
 	if err != nil {
 		port_int = 80
 	}
+
 	return C.struct_CustomHTTPRequest{
 		Method: C.CString(req.Method),
 		Path:   C.CString(req.URL.Path),
-		Host:   C.CString(host),
+		Host:   C.CString(req.URL.Hostname()),
 		Port:   C.int(port_int),
 		Body:   C.CString("TODO"),
 		Header: C.CString("TODO"),

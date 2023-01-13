@@ -31,7 +31,7 @@ GET: /http://example.host.com/path
 //TODO: threadingして複数処理可能にする
 int Relay(char *host, int port, char *path, char *relayBuffer, char *resultBuffer)
 {
-    fprintf(stdout, "relay toward %s:%d%s",host,port,path);
+    fprintf(stdout, "relay toward %s:%d%s\n",host,port,path);
     //resolve host name
     struct hostent *hostResolved;
     if ((hostResolved = gethostbyname(host))==NULL){

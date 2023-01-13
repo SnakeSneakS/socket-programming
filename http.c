@@ -22,17 +22,16 @@ HTTPRequestHeader parseHTTPRequestHeader(char *header){
 };
 */
 
-//Yet implemented
 typedef enum HTTPMethod{
     //OPTIONS,
     GET,
     //HEAD,
-    //POST,
-    //PUT,
-    //DELETE,
+    POST,
+    PUT,
+    DELETE,
     //TRACE,
-    //CONNECT,
-    //PATCH,
+    CONNECT,
+    PATCH,
     UNKNOWN_METHOD
 } HTTPMethod;
 
@@ -78,11 +77,12 @@ struct HTTPRequest ParseHTTPRequest(char *message) {
         struct HTTPRequest req;
         return req;
     }
-
+    /*
     printf("Host: %s\n",r.Host);
     printf("PATH: %s\n",r.Path);
     printf("PORT: %d\n",r.Port);
     printf("METHOD: %s\n",r.Method);
+    */
 
     struct HTTPRequest req;
     req.host=r.Host;
@@ -104,7 +104,7 @@ void HTTPResponseString(struct HTTPResponse res, char *result, int maxLen){
         "HTTP/1.1 %d\r\n"\
         "Content-Type: %s\r\n"\
         "\r\n"\
-        "%s",
+        "%s\r\n",
         res.HTTPStatus,
         res.ContentType,
         res.Content);
