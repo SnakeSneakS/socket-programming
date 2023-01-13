@@ -1,5 +1,3 @@
-# socket programing web proxy server
-
 # memo
 - https://github.com/jelford/socks5-proxy
 - https://dev.classmethod.jp/articles/socks-proxy-and-http-proxy/
