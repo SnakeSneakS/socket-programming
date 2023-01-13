@@ -32,6 +32,9 @@
         "executor": "c",
         "netdb.h": "c",
         "go.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "pthread.h": "c",
+        "socket": "c",
+        "stdbool.h": "c"
     }
 }

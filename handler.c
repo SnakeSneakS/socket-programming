@@ -11,6 +11,7 @@
 #include<socket.h>
 
 #include<config.h>
+#include<proxy.h>
 
 typedef void socket_message_handler(int socket, void *echoBuffer, size_t recvMsgSize);
 
@@ -23,7 +24,7 @@ void EchoMessage(int socket, char *messageBuffer, size_t messageSize){
         return;
     }
     close(socket);
-}
+};
 
 void HTTPHelloWorld(int socket){
     char messageBuffer[RCVBUFSIZE];
@@ -51,7 +52,7 @@ void HTTPHelloWorld(int socket){
     }
 
     close(socket);
-}
+};
 
 
 size_t createResponseForConnectRequest(
@@ -135,10 +136,6 @@ void handleIndexGet(int socket, struct HTTPRequest req){
 }
 
 void handleProxyConnect(int clientSocket, struct HTTPRequest req){
-    //connectメソッドの仕様がよくわからない.
-    fprintf(stderr, "handleProxyConnect NotImplemented");
-    return;
-
     fprintf(stdout, "establish connection toward %s:%d%s\n",req.host,req.port,req.path);
     
     //resolve host name
@@ -165,12 +162,12 @@ void handleProxyConnect(int clientSocket, struct HTTPRequest req){
     targetAddr.sin_addr.s_addr = iPTarget; 
     targetAddr.sin_port        = htons(req.port); 
 
-    int relaySocket;
-    if ((relaySocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
+    int targetSocket;
+    if ((targetSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0){
         perror("socket() failed");
         return;
     }
-    if (connect(relaySocket, (struct sockaddr *) &targetAddr, sizeof(targetAddr)) < 0){
+    if (connect(targetSocket, (struct sockaddr *) &targetAddr, sizeof(targetAddr)) < 0){
         perror("connect() failed");
         return;
     }
@@ -178,62 +175,13 @@ void handleProxyConnect(int clientSocket, struct HTTPRequest req){
     char *connectOk = "HTTP/1.1 200 Connection Established\r\n\r\n";
     if(send(clientSocket, connectOk, (int)strlen(connectOk), 0) != (int)strlen(connectOk)){
         perror("send() failed");
-        close(relaySocket);
+        close(targetSocket);
         return;
     }
     
-    size_t messageSize;
-    char messageBuffer[RCVBUFSIZE], responseBuffer[RCVBUFSIZE];
-    while(1){
-        memset(&messageBuffer,0,sizeof(messageBuffer));
-        memset(&responseBuffer,0,sizeof(responseBuffer));
-        if ((messageSize = recv(clientSocket, messageBuffer, RCVBUFSIZE, 0)) < 0){
-            perror("recv() failed");
-            close(relaySocket);
-            return;
-        }
-        
-        if(messageSize==0){
-            close(relaySocket);
-            return;
-        }
-        
-        fprintf(stdout, "received [%zu]: %s\n", messageSize, messageBuffer);
-
-        //proxy->target
-        unsigned int textLen = strlen(messageBuffer);          /* Determine input length */
-        if (send(relaySocket, messageBuffer, textLen, 0) != textLen){
-            perror("send() sent a different number of bytes than expected");
-            close(relaySocket);
-            return;
-        }
-
-        //target->proxy
-        int bytesRcvd;
-        if ((bytesRcvd = recv(relaySocket, responseBuffer, RCVBUFSIZE - 1, 0)) <= 0){
-            perror("recv() failed or connection closed prematurely");
-            struct HTTPResponse res;
-            res.HTTPStatus = 500;
-            res.ContentType="text/html";
-            res.Content="recv failed.";
-            HTTPResponseString(res, responseBuffer, RCVBUFSIZE);
-            if(send(clientSocket, responseBuffer, (int)strlen(responseBuffer), 0) != (int)strlen(responseBuffer)){
-                perror("send() failed");
-                close(relaySocket);
-                return;
-            }
-        }
-        
-        //proxy->client
-        if(send(clientSocket, responseBuffer, (int)strlen(responseBuffer), 0) != (int)strlen(responseBuffer)){
-            perror("send() failed");
-            close(relaySocket);
-            return;
-        }
-    }
-
-
-    end: close(relaySocket);
+    Connect(clientSocket, targetSocket);
+    
+    END: close(targetSocket);
 }
 
 void handleHttpRequest(int socket,struct HTTPRequest req){
@@ -253,7 +201,7 @@ void handleHttpRequest(int socket,struct HTTPRequest req){
             return;
         }
 
-        goto END;
+        return;
     }
 
     if(strcmp(req.path,"/")==0){
@@ -270,7 +218,7 @@ void handleHttpRequest(int socket,struct HTTPRequest req){
         fprintf(stdout, "unhandling request");
     }
 
-    END: return;
+    return;
 }
 
 void HandleWebRequest(int socket){
@@ -306,7 +254,7 @@ void handleHTTPProxy(int socket, char *messageBuffer,struct HTTPRequest req){
         perror("send() failed");
         return;
     }
-}
+};
 
 void HandleWebProxyRequest(int socket){
     char messageBuffer[RCVBUFSIZE];
@@ -320,7 +268,8 @@ void HandleWebProxyRequest(int socket){
     }
 
     struct HTTPRequest req = ParseHTTPRequest(messageBuffer);
-    
+    //printf("debug: %s\n",messageBuffer);
+
     //error check
     if(req.isError){
         char responseMessage[RCVBUFSIZE];
@@ -341,12 +290,15 @@ void HandleWebProxyRequest(int socket){
 
     if(req.method==CONNECT){
         handleProxyConnect(socket, req);
+        goto END;
     }
     else if(req.method!=UNKNOWN_METHOD){
         //curl google.com --proxy http://user:password@localhost:8080
         handleHTTPProxy(socket, messageBuffer, req);
+        goto END;
     }else{
         respondNotFound(socket, req);  
+        goto END;
     }
     
     END: close(socket);

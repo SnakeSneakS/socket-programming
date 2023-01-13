@@ -36,15 +36,15 @@ typedef enum HTTPMethod{
 } HTTPMethod;
 
 HTTPMethod parseHTTPMethod(char *method){
-    if(strcasecmp(method,"Get")==0) return GET;
-    //if(strcmp(method,"Options")==0) return OPTIONS;
-    //if(strcmp(method,"Head")==0) return HEAD;
-    if(strcmp(method,"Post")==0) return POST;
-    if(strcmp(method,"Put")==0) return PUT;
-    if(strcmp(method,"Delete")==0) return DELETE;
-    //if(strcmp(method,"Trace")==0) return TRACE;
-    if(strcmp(method,"Patch")==0) return PATCH;
-    if(strcmp(method,"Connect")==0) return CONNECT;
+    if(strcasecmp(method,"GET")==0) return GET;
+    //if(strcmp(method,"OPTIONS")==0) return OPTIONS;
+    //if(strcmp(method,"HEAD")==0) return HEAD;
+    if(strcmp(method,"POST")==0) return POST;
+    if(strcmp(method,"PUT")==0) return PUT;
+    if(strcmp(method,"DELETE")==0) return DELETE;
+    //if(strcmp(method,"TRACE")==0) return TRACE;
+    if(strcmp(method,"PATCH")==0) return PATCH;
+    if(strcmp(method,"CONNECT")==0) return CONNECT;
     return UNKNOWN_METHOD;
 };
 

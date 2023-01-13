@@ -33,6 +33,7 @@ void *ThreadMain(void *threadArgs){
     free(threadArgs);
 
     pthread_mutex_lock(mutex);
+    //printf("debug: inclement %lu->%lu\n",*counter,*counter+1);
     *counter += 1;
     pthread_mutex_unlock(mutex);
 
@@ -50,6 +51,7 @@ void *ThreadMain(void *threadArgs){
     }
 
     pthread_mutex_lock(mutex);
+    //printf("debug: inclement %lu<-%lu\n",*counter-1,*counter);
     *counter -= 1;
     pthread_mutex_unlock(mutex);
 
@@ -63,7 +65,6 @@ void setStopServerFlag(int ignored){
     _stop = true;
 }
 
-//TODO: graceful shutting down
 void ListenAndServeTCP(int port, enum Mode serverMode)
 {
     //for graceful shut down

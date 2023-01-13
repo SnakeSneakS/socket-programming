@@ -3,8 +3,22 @@
 .DEFAULT_GOAL := help
 
 HOST="127.0.0.1"
-PORT=8080
-TEXT="This is an test message"
+PORT="8080"
+TEXT="GET / HTTP/1.1\r\n\
+Host: localhost:8080\r\n\r\n\
+" #環境変数は改行を読み込んでくれないっぽいね
+
+#GET http://abehiroshi.la.coocan.jp/image/abehiroshi.jpg HTTP/1.1
+#Host: abehiroshi.la.coocan.jp
+#Proxy-Connection: keep-alive
+#User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36
+#Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+#Referer: http://abehiroshi.la.coocan.jp/top.htm
+#Accept-Encoding: gzip, deflate
+#Accept-Language: ja,en;q=0.9
+#Range: bytes=4-3103
+#If-Range: "c20-4a8f71b8608c0"
+
 
 
 .PHONY: build-server-module
@@ -17,7 +31,7 @@ build-server: ## build server ## make build-server
 	gcc \
 	-framework CoreFoundation -framework Security \
 	-o ./out/server \
-	go/out/go.a http.c socket.c handler.c server.c 
+	go/out/go.a http.c proxy.c socket.c handler.c server.c 
 
 .PHONY: run-web-server
 run-web-server: build-server ## run web server ## make run-web-server PORT={port}
